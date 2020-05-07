@@ -1,35 +1,48 @@
 'use strict';
 const http = require('http');
-const server = http.createServer((req, res) => {
+const server = http.createServer((req, res) =>
+{
   const now = new Date();
   console.info('[' + now + '] Requested by ' + req.connection.remoteAddress);
   res.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8'
+    'Content-Type': 'text/html; charset=utf-8'
   });
 
-  switch (req.method) {
+  switch (req.method)
+  {
     case 'GET':
-      res.write('GET ' + req.url);
+      const fs = require('fs');
+      const rs = fs.createReadStream('./form.html');
+      rs.pipe(res);
       break;
     case 'POST':
-      res.write('POST ' + req.url);
       let rawData = '';
-      req.on('data', (chunk) => {
+      req.on('data', (chunk) =>
+      {
         rawData = rawData + chunk;
-      }).on('end', () => {
-        console.info('[' + now + '] Data posted: ' + rawData);
+      }).on('end', () =>
+      {
+        const qs = require('querystring');
+        const decoded = decodeURIComponent(rawData);
+        console.info('[' + now + '] 投稿: ' + decoded);
+        const answer = qs.parse(decoded);
+        res.write('<!DOCTYPE html><html lang="ja"><body><h1>' + answer['name'] + 'さんは' + answer['yaki-shabu'] + 'に投票しました</h1 ></body ></html > ');
+        res.end();
       });
       break;
     default:
       break;
   }
-  res.end();
-}).on('error', (e) => {
+
+}).on('error', (e) =>
+{
   console.error('[' + new Date() + '] Server Error', e);
-}).on('clientError', (e) => {
+}).on('clientError', (e) =>
+{
   console.error('[' + new Date() + '] Client Error', e);
 });
 const port = 8000;
-server.listen(port, () => {
+server.listen(port, () =>
+{
   console.info('[' + new Date() + '] Listening on ' + port);
 });
